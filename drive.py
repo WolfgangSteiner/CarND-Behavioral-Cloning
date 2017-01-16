@@ -44,7 +44,7 @@ def telemetry(sid, data):
 
     display_image = image.resize((image.width*2,image.height*2), resample=Image.LANCZOS)
     draw = ImageDraw.Draw(display_image)
-    draw.text((0,0), "Steering Angle: %.2f    Throttle: %.2f    Speed: %2f" % (steering_angle * 25.0, throttle, speed))
+    draw.text((0,0), "Steering Angle: %.2f    Throttle: %.2f    Speed: %.2f" % (steering_angle * 25.0, throttle, speed))
     display_image_array = cv2.cvtColor(np.asarray(display_image), cv2.COLOR_RGB2BGR)
     cv2.imshow('Telemetry',display_image_array)
     cv2.waitKey(1)
@@ -52,14 +52,13 @@ def telemetry(sid, data):
 
     if is_training_mode:
         steering_angle = 0.0
-        throttle = 1.0
+        throttle = 0.2
     else:
         # This model currently assumes that the features of the model are just the images. Feel free to change this.
         steering_angle = float(model.predict(transformed_image_array, batch_size=1))
         # The driving model currently just outputs a constant throttle. Feel free to edit this.
         throttle = 0.2
 
-    print(steering_angle, throttle)
     send_control(steering_angle, throttle)
 
 
