@@ -42,8 +42,11 @@ def telemetry(sid, data):
     imgString = data["image"]
     image = Image.open(BytesIO(base64.b64decode(imgString)))
     image_array = np.asarray(image)
-    cv2.imshow('camera',image_array)
-    cv2.waitKey(5)
+
+    display_image = image.resize((image.width*2,image.height*2), resample=Image.LANCZOS)
+    display_image_array = cv2.cvtColor(np.asarray(display_image), cv2.COLOR_RGB2BGR)
+    cv2.imshow('camera',display_image_array)
+    cv2.waitKey(1)
     transformed_image_array = image_array[None, :, :, :]
 
     if is_training_mode:
