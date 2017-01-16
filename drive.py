@@ -7,8 +7,7 @@ import socketio
 import eventlet
 import eventlet.wsgi
 import time
-from PIL import Image
-from PIL import ImageOps
+from PIL import Image, ImageOps, ImageDraw
 from flask import Flask, render_template
 from io import BytesIO
 
@@ -33,24 +32,26 @@ is_training_mode = True
 @sio.on('telemetry')
 def telemetry(sid, data):
     # The current steering angle of the car
-    steering_angle = data["steering_angle"]
+    steering_angle = float(data["steering_angle"]) / 25.0
     # The current throttle of the car
-    throttle = data["throttle"]
+    throttle = float(data["throttle"])
     # The current speed of the car
-    speed = data["speed"]
+    speed = float(data["speed"])
     # The current image from the center camera of the car
     imgString = data["image"]
     image = Image.open(BytesIO(base64.b64decode(imgString)))
     image_array = np.asarray(image)
 
     display_image = image.resize((image.width*2,image.height*2), resample=Image.LANCZOS)
+    draw = ImageDraw.Draw(display_image)
+    draw.text((0,0), "Steering Angle: %.2f    Throttle: %.2f    Speed: %2f" % (steering_angle * 25.0, throttle, speed))
     display_image_array = cv2.cvtColor(np.asarray(display_image), cv2.COLOR_RGB2BGR)
-    cv2.imshow('camera',display_image_array)
+    cv2.imshow('Telemetry',display_image_array)
     cv2.waitKey(1)
     transformed_image_array = image_array[None, :, :, :]
 
     if is_training_mode:
-        steering_angle = 0.1
+        steering_angle = 0.0
         throttle = 1.0
     else:
         # This model currently assumes that the features of the model are just the images. Feel free to change this.
