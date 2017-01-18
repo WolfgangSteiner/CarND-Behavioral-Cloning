@@ -24,13 +24,7 @@ def random_mirror(img, steering_angle):
     return img, steering_angle
 
 
-def DataGenerator(batch_size=128, data_dirs=['data']):
-    data = []
-    for d in data_dirs:
-        data += Common.load_data(d)
-
-    random.shuffle(data)
-
+def DataGenerator(data, batch_size=128, augment_data=True):
     num_data = len(data)
     idx = 0
 
@@ -47,9 +41,11 @@ def DataGenerator(batch_size=128, data_dirs=['data']):
             elif file_name.startswith("left"):
                 angle += 2.5 / 25
 
-            img, angle = random_rotate(img, angle)
-            img, angle = random_translate(img, angle)
-            img, angle = random_mirror(img, angle)
+            if (augment_data):
+                img, angle = random_rotate(img, angle)
+                img, angle = random_translate(img, angle)
+                img, angle = random_mirror(img, angle)
+
             img = ImageOps.equalize(img)
             img_data = np.array(img).astype('float32') / 255.0
             X.append(img_data)
