@@ -2,7 +2,8 @@
 
 
 ## Model architecture
-I chose a basic convolutional model architecture, consiting of three convolutional layers, two hidden fully connected
+I chose a basic convolutional model architecture, consiting of three convolutional layers of increasing 
+filter depth alternated with pooling layers, two hidden fully connected
 layers with dropout and a final fully connected layer with one output neuron:
 
 ```
@@ -52,3 +53,17 @@ The steering angle is adjusted according to the formula: `steering_angle += math
 * The image is cropped vertically, cutting off the area above the horizon and the bottom area containing the front of the car.
 * The image is rescaled non-proportionally to 32x32px sizes, using bicubic interpolation.
 * The image is normalized to the value range [0.0,1.0].
+
+## Training Procedure
+* The data is split into a training and a validation set of proportions 80/20.
+* Batch size is 64, epoch size is 16384.
+* I chose the Adam optimizer with an initial learning rate of 0.0001.
+* The learning rate is reduced by half whenever the validation loss did not improve over the last four epochs.
+* Training data is augmented as described above using a keras generator.
+
+## Driving script (drive.py)
+* The image received from the simulator is preprocessed as described above.
+* The preprocessed/rescaled image is evaluated by the network, yielding the new steering angle. 
+* Throttle is set by a simple control mechanism that aims to keep the speed close to a preset target speed.
+* Steering angle/throttle are passed back to the simulator.
+
