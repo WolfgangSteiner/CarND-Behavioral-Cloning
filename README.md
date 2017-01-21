@@ -67,10 +67,14 @@ The steering angle is adjusted according to the formula: `steering_angle += math
 * I chose the Adam optimizer with an initial learning rate of 0.0001.
 * The learning rate is reduced by half whenever the validation loss did not improve over the last four epochs.
 * Training data is augmented as described above using a keras generator.
+* Training was continued for 71 epochs, after which the validation loss did not improve further.
 
 ## Driving script (drive.py)
 * The image received from the simulator is preprocessed as described above.
 * The preprocessed/rescaled image is evaluated by the network, yielding the new steering angle. 
 * Throttle is set by a simple control mechanism that aims to keep the speed close to a preset target speed.
 * Steering angle/throttle are passed back to the simulator.
-
+* Telemetry data is displayed using OpenCV, which includes:
+  - Camera image from the simulator.
+  - Resulting input image for the model after cropping/rescaling.
+  - Steering angle, throttle, speed.
