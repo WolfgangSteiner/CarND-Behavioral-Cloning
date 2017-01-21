@@ -1,19 +1,20 @@
 import numpy as np
-from PIL import Image, ImageOps, ImageDraw
+from PIL import Image, ImageOps, ImageDraw, ImageFilter
 import Common
 import math, random
 
 
 def random_rotate(img, steering_angle):
-    angle = np.random.normal(0.0, 5.0)
-    return img.rotate(angle, resample=Image.BICUBIC, expand = 0), steering_angle + angle / 25.0
+    angle = np.random.uniform(-7.5, 7.5)
+    return img.rotate(angle, resample=Image.BICUBIC, expand = 0), steering_angle - angle / 25.0
 
 
 def random_translate(img, steering_angle):
-    delta_x = np.random.normal(0, 10)
+    delta_x = np.random.uniform(-40, 40)
+    delta_y = np.random.uniform(-10, 10)
     img = img.transform(img.size, Image.AFFINE, (1.0, 0.0, delta_x, 0.0, 1.0, 0.0))
     angle = math.atan2(delta_x , 95.0) * 180 / math.pi / 25
-    return img,steering_angle - angle
+    return img,steering_angle + angle
 
 
 def random_mirror(img, steering_angle):
@@ -24,45 +25,72 @@ def random_mirror(img, steering_angle):
     return img, steering_angle
 
 
-def DataGenerator(data, batch_size=128, augment_data=True):
+def DataGenerator(data, batch_size=64, augment_data=True):
     num_data = len(data)
     idx = 0
+    recovery_angle_a = 7.5
+    recovery_angle_b = 15.0
+    side_camera_angle = 0.5
 
     while True:
         X = []
         y = []
         for i in range(0,batch_size):
-            file_name, telemetry = data[idx]
-            img = Image.open(file_name)
-            angle = telemetry.steering_angle
+            while True:
+                file_name, telemetry = data[idx]
+                angle = telemetry.steering_angle
+                throttle = telemetry.throttle
+                idx = (idx + 1) % num_data
+                if True or angle >= 0.01 or random.random() < 0.125:
+                    break
 
-            if file_name.startswith("right"):
-                angle -= 2.5 / 25
-            elif file_name.startswith("left"):
-                angle += 2.5 / 25
+            img = Image.open(file_name)
+            dir_name,_,file_name = file_name.split('/')
+
+            if dir_name.startswith("recovery_left"):
+                angle += recovery_angle_b / 25.0
+            elif dir_name.startswith("recovery_right"):
+                angle -= recovery_angle_b / 25.0
+
+            if dir_name.startswith("lane_left"):
+                angle += recovery_angle_a / 25.0
+            elif dir_name.startswith("lane_right"):
+                angle -= recovery_angle_a / 25.0
+
+            if "right" in file_name:
+                angle -= side_camera_angle / 25.0
+            elif "left" in file_name:
+                angle += side_camera_angle / 25.0
 
             if (augment_data):
                 img, angle = random_rotate(img, angle)
                 img, angle = random_translate(img, angle)
-                img, angle = random_mirror(img, angle)
 
-            img = ImageOps.equalize(img)
-            img_data = np.array(img).astype('float32') / 255.0
+            img, angle = random_mirror(img, angle)
+            img_data = Common.preprocess_image(img)
             X.append(img_data)
             y.append(angle)
-            idx = (idx + 1) % num_data
 
         yield np.array(X), np.array(y)
 
 
 if __name__ == '__main__':
-    num_cols = 8
-    num_rows = 10
-    w = 320
-    h = 160
+    num_cols = 8 * 5
+    num_rows = 10 * 3
+    w = 32
+    h = 32
+
+    dirs = "center_01"#,recovery_left_01,recovery_right_01,lane_left_01,lane_right_01"
+    #dirs = "center_01"
+    data = []
+    for d in dirs.split(','):
+        data += Common.load_data(d)
+
+    #random.shuffle(data)
+
     overview_img = Image.new("RGBA",(w * num_cols, h * num_rows), (0,0,0))
-    gen = DataGenerator(num_rows * num_cols)
-    X,y = gen.next()
+    gen = DataGenerator(data, batch_size=num_rows * num_cols)
+    X,y = gen.__next__()
     draw = ImageDraw.Draw(overview_img)
 
     for j in range(num_rows):
@@ -70,9 +98,7 @@ if __name__ == '__main__':
             idx = j*num_cols + i
             xi = i*w
             yi = j*h
-            print X[idx].shape
-            print X[idx]
-            img = Image.fromarray((X[idx] * 255.0).astype('uint8'))
+            img = Image.fromarray((X[idx] * 255.0 + 127.5).astype('uint8'))
             angle = y[idx]
             overview_img.paste(img, (xi,yi))
             draw.text((xi,yi), "%.2f" % angle, fill = (255,0,0))
