@@ -1,4 +1,5 @@
 # CarND-Behavioral-Cloning
+<img src="screenshot.jpg">
 
 
 ## Model architecture
