@@ -36,6 +36,7 @@ For all recorded datasets, left/right camera images are used in addition to the 
 * center: Driving in the center of the road (offset: 0).
 * lane_left / lane_right: Driving on the left/right side of the road with the wheels just touching the lane lines (offset: +/- 7.5°).
 * recovery_left / recovery_right: Driving as far on the edges/side as possible (offset: +/- 15.0°).
+![](example_images/recovery_left.jpg)![](example_images/lane_left.jpg)![](example_images/center.jpg)![](example_images/lane_right.jpg)![](example_images/recovery_right.jpg)
 
 ## Data Augmentation
 The following measures are taken to augment the training data:
