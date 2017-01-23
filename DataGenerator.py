@@ -20,10 +20,33 @@ def random_translate(img, steering_angle):
 
 def random_shadow(img, steering_angle):
     (w,h) = img.size
-    img_data = np.asarray(img)
-    shadow_img = img_data[:,:,2].copy()
-    cv2.fillPoly(shadow_img, [(0,0), (w/2,0), (w/2,h), (w,h) ], (0,))
-    img_data[:,:,2] = 0.5 * img_data[:,:,2] + 0.5 * shadow_img
+    if random.random() > 0.5:
+        p1 = [0, random.uniform(0,h/2)]
+    else:
+        p1 = [random.uniform(0,w/2), 0]
+
+    if random.random() > 0.5:
+        p2 = [0, random.uniform(h/2,h)]
+    else:
+        p2 = [random.uniform(0,w/2), h]
+
+    if random.random() > 0.5:
+        p3 = [w, random.uniform(h/2,h)]
+    else:
+        p3 = [random.uniform(w/2,w), h]
+
+    if random.random() > 0.5:
+        p4 = [w, random.uniform(0,h/2)]
+    else:
+        p4 = [random.uniform(w/2,w), 0]
+
+    intensity = random.uniform(0.0,0.6)
+
+    img_data = cv2.cvtColor(np.asarray(img).copy(),cv2.COLOR_RGB2HLS)
+    shadow_img = img_data.copy().astype(np.uint8)
+    cv2.fillPoly(shadow_img, np.array([[p1,p2,p3,p4]], np.int32), (0,0,0))
+    img_data[:,:,1] = (1.0 - intensity) * img_data[:,:,1] + intensity * shadow_img[:,:,1]
+    img_data = cv2.cvtColor(img_data, cv2.COLOR_HLS2RGB)
     return Image.fromarray(img_data), steering_angle
 
 
