@@ -76,9 +76,6 @@ def telemetry(sid, data):
     delta_throttle = min(0.05, (target_speed - speed)/ 100.0)
     throttle = min(0.6, throttle + delta_throttle)
 
-    # Send control to simulator:
-    send_control(steering_angle, throttle)
-
     # Prepare display of telemetry data:
     display_image = image.resize((image.width*1,image.height*1), resample=Image.LANCZOS)
 
@@ -92,7 +89,8 @@ def telemetry(sid, data):
 
     # Draw the cropped/rescaled input image for the model:
     (w,h) = display_image.size
-    input_img = Image.fromarray((X[0] * 255.0).astype('uint8'))
+    input_img_data = cv2.cvtColor((X[0] * 255.0).astype('uint8'), cv2.COLOR_HLS2RGB)
+    input_img = Image.fromarray(input_img_data)
     draw.rectangle((w - input_img.width - 1, 0, w, input_img.height), fill=(255,255,255))
     display_image.paste(input_img, (320 - input_img.width, 0))
 
@@ -110,6 +108,16 @@ def telemetry(sid, data):
     elif key == ord('r'):
         print("Reloading model...")
         load_model()
+    elif key == ord('a'):
+        steering_angle -= 0.5
+    elif key == ord('d'):
+        steering_angle += 0.5
+    elif key > 0:
+        print(key)
+
+    # Send control to simulator:
+    send_control(steering_angle, throttle)
+
 
 
 @sio.on('connect')

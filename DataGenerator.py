@@ -2,6 +2,7 @@ import numpy as np
 from PIL import Image, ImageOps, ImageDraw, ImageFilter
 import Common
 import math, random
+import cv2
 
 
 def random_rotate(img, steering_angle):
@@ -17,6 +18,15 @@ def random_translate(img, steering_angle):
     return img,steering_angle + angle
 
 
+def random_shadow(img, steering_angle):
+    (w,h) = img.size
+    img_data = np.asarray(img)
+    shadow_img = img_data[:,:,2].copy()
+    cv2.fillPoly(shadow_img, [(0,0), (w/2,0), (w/2,h), (w,h) ], (0,))
+    img_data[:,:,2] = 0.5 * img_data[:,:,2] + 0.5 * shadow_img
+    return Image.fromarray(img_data), steering_angle
+
+
 def random_mirror(img, steering_angle):
     if random.random() > 0.5:
         img = ImageOps.mirror(img)
@@ -28,9 +38,9 @@ def random_mirror(img, steering_angle):
 def DataGenerator(data, batch_size=64, augment_data=True):
     num_data = len(data)
     idx = 0
-    recovery_angle_a = 7.5
-    recovery_angle_b = 15.0
-    side_camera_angle = 0.5
+    recovery_angle_a = 3.5
+    recovery_angle_b = 7.5
+    side_camera_angle = 1.5
 
     while True:
         X = []
@@ -65,6 +75,7 @@ def DataGenerator(data, batch_size=64, augment_data=True):
             if (augment_data):
                 img, angle = random_rotate(img, angle)
                 img, angle = random_translate(img, angle)
+                img, angle = random_shadow(img, angle)
 
             img, angle = random_mirror(img, angle)
             img_data = Common.preprocess_image(img)
@@ -98,7 +109,7 @@ if __name__ == '__main__':
             idx = j*num_cols + i
             xi = i*w
             yi = j*h
-            img = Image.fromarray((X[idx] * 255.0 + 127.5).astype('uint8'))
+            img = Image.fromarray(cv2.cvtColor((X[idx] * 255.0).astype('uint8'), cv2.COLOR_HLS2RGB))
             angle = y[idx]
             overview_img.paste(img, (xi,yi))
             draw.text((xi,yi), "%.2f" % angle, fill = (255,0,0))
